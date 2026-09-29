@@ -22,10 +22,12 @@ fn bootstrap_build() -> std::AutotoolsBuild {
     }
 }
 
-pub fn recipe() -> std::Recipe<std::AutotoolsBuild> {
-    std::Recipe<std::AutotoolsBuild> {
+pub fn recipe() -> std::CatalogRecipe {
+    std::CatalogRecipe {
         package = bootstrap_package();
         acquisition = bootstrap_sources();
-        build = bootstrap_build();
+        build = std::Build::Autotools(bootstrap_build());
+        build_inputs = std::Option::None;
+        application = std::Option::None;
     }
 }

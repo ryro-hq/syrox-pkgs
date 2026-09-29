@@ -1,0 +1,85 @@
+RKE2 for Syrox
+=============
+
+Version: v1.36.4+rke2r1 (Linux x86_64)
+Upstream: https://github.com/rancher/rke2/releases/tag/v1.36.4%2Brke2r1
+Archive: rke2.linux-amd64.tar.gz
+SHA-256: 7bcbd3167d6947e1d79cdf722acdc740b28021fefb50dd5b974a1980776d4079
+
+This recipe uses Syrox's PrebuiltBuild backend. Build matching srx and
+syrox-worker binaries from Syrox commit
+65ecc3cebb69d2c0ed4aa2c18377a6a48019960e (feat/prebuilt-packages):
+
+  cargo build --release --locked -p syrox --bins
+
+The catalog lock includes the standard library that defines this backend.
+
+Build and inspect
+-----------------
+
+Use an operational config file, for example /path/to/rke2-config.toml:
+
+  [build]
+  host-toolchain = "/usr"
+
+  [network]
+  allow-https = ["https://github.com/rancher/rke2/releases/download/v1.36.4%2Brke2r1/rke2.linux-amd64.tar.gz"]
+  maximum-redirects = 2
+
+From the syrox-pkgs checkout:
+
+  srx project lock --check .
+  srx build -n .#rke2
+  srx build --config /path/to/rke2-config.toml .#rke2
+  srx run --config /path/to/rke2-config.toml .#rke2 -- --version
+  srx run --config /path/to/rke2-config.toml -o .#rke2 -- --version
+
+The first build downloads and verifies the fixed archive, then extracts and
+copies its files in the Syrox build sandbox. Subsequent builds verify and reuse
+the retained result. Offline mode uses cached, verified source bytes or results.
+
+Validated smoke (2026-09-29)
+----------------------------
+
+The release archive was acquired by srx over HTTPS, inspected and installed:
+41,190,955 compressed bytes; 15 archive entries; 9 output files;
+133,305,903 expanded file bytes. Repeating the build offline reported
+"reused rke2" and "cache verified local action hit". Both normal and offline
+srx run invocations printed:
+
+  rke2 version v1.36.4+rke2r1 (7479a59cdd2c8ce0b8871699a24daa4b7c28cc64)
+  go version go1.26.7-X:boringcrypto
+
+This host uses an NSS hosts policy with systemd-resolved that the current Syrox
+resolver does not support. For the initial online build only, a temporary copy
+of /etc/nsswitch.conf replaced its hosts line with "hosts: files dns"; all other
+lines were retained. That copy was mounted into a private namespace:
+
+  bwrap --bind / / --dev-bind /dev /dev \
+    --ro-bind /absolute/path/nsswitch-test.conf /etc/nsswitch.conf -- \
+    srx build --config /path/to/rke2-config.toml .#rke2
+
+The system's /etc files were not changed. The host's existing resolv.conf was
+used. Cache reuse and both version runs succeeded in the normal host environment.
+On a host with a supported NSS policy (files/dns), the ordinary build command
+above handles acquisition directly.
+
+Contents and cluster lifecycle
+------------------------------
+
+The output retains upstream bin/, lib/systemd/system/ and share/rke2/, including
+the license. The statically linked bin/rke2 needs no Syrox glibc provider for
+the CLI smoke. The upstream service files and administrative scripts are
+packaged as data and are not executed or activated during the build.
+
+Running a Kubernetes server or agent needs host-level services, writable state
+and configuration, networking, and the RKE2 runtime images. The current rootless
+srx run session is suitable for CLI inspection, not a persistent RKE2 node.
+The upstream units refer to /usr/local/bin/rke2; a host service integration must
+bind its executable path and retain the corresponding Store result. Container
+images and air-gap bundles are not part of this recipe's archive or offline
+guarantee.
+
+Upstream installation and configuration:
+https://docs.rke2.io/install/methods
+https://docs.rke2.io/install/configuration

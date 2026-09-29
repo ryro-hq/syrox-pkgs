@@ -1,5 +1,7 @@
 inputs { catalog = "modules:recipes"; }
 
 outputs {
-    catalog: std::Catalog = std::Catalog { input = "catalog"; };
+    packages: std::Result<std::PackageSet<std::CatalogRecipe>, std::MapKey> = std::package_set(
+        module_exports(catalog, recipe, std::MapEntry::Entry<fn() -> std::CatalogRecipe>)
+    );
 }

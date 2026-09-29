@@ -1,5 +1,5 @@
-pub fn recipe() -> std::Recipe<std::GlibcBuild> {
-    std::Recipe<std::GlibcBuild> {
+pub fn recipe() -> std::CatalogRecipe {
+    std::CatalogRecipe {
         package = std::Package { id = "glibc"; dependencies = []; };
         acquisition = std::Acquisition {
             package = "glibc";
@@ -9,11 +9,13 @@ pub fn recipe() -> std::Recipe<std::GlibcBuild> {
                 maximum_bytes = 33554432;
             }];
         };
-        build = std::GlibcBuild {
+        build = std::Build::Glibc(std::GlibcBuild {
             package = "glibc";
             source_directory = "glibc-2.44";
             entry = "usr/lib/ld-linux-x86-64.so.2";
             timeout_seconds = 1800;
-        };
+        });
+        build_inputs = std::Option::None;
+        application = std::Option::None;
     }
 }

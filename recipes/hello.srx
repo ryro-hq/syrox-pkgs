@@ -38,12 +38,12 @@ fn hello_application() -> std::Application {
     }
 }
 
-pub fn recipe() -> std::ApplicationRecipe<std::AutotoolsBuild> {
-    std::ApplicationRecipe<std::AutotoolsBuild> {
+pub fn recipe() -> std::CatalogRecipe {
+    std::CatalogRecipe {
         package = hello_package();
         acquisition = hello_sources();
-        build = hello_build();
-        build_inputs = hello_build_inputs();
-        application = hello_application();
+        build = std::Build::Autotools(hello_build());
+        build_inputs = std::Option::Some(hello_build_inputs());
+        application = std::Option::Some(hello_application());
     }
 }

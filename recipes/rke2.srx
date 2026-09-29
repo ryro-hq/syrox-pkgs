@@ -1,0 +1,27 @@
+// RKE2 stable v1.36.4+rke2r1, Linux x86_64. Upstream gzip/tar release;
+// checksum: rancher/rke2 v1.36.4+rke2r1 sha256sum-amd64.txt.
+pub fn recipe() -> std::CatalogRecipe {
+    std::CatalogRecipe {
+        package = std::Package { id = "rke2"; dependencies = []; };
+        acquisition = std::Acquisition {
+            package = "rke2";
+            sources = [std::source_request(
+                "https://github.com/rancher/rke2/releases/download/v1.36.4%2Brke2r1/rke2.linux-amd64.tar.gz",
+                "7bcbd3167d6947e1d79cdf722acdc740b28021fefb50dd5b974a1980776d4079",
+                67108864,
+            )];
+        };
+        build = std::Build::Prebuilt(std::PrebuiltBuild {
+            package = "rke2";
+            source_directory = ".";
+            entry = "bin/rke2";
+            timeout_seconds = 120;
+        });
+        build_inputs = std::Option::None;
+        application = std::Option::Some(std::Application {
+            package = "rke2";
+            loader = [];
+            libraries = [];
+        });
+    }
+}
